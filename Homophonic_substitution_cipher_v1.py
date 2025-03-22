@@ -3,126 +3,105 @@ import json
 import string
 import os
 
-def generate_key():
-    #generowanie klucza
-    alfabet = string.ascii_uppercase                 #zmienna alfabet to gotowy string "ABCDEFGHIJKLMNOPQRSTUVWXYZ" - ascii_uppercase czyli wszystkie (wielkie) litery angielskiego alfabetu
-    key = {}                                         #zmienna key typu dictionary - sklada sie z par klucz-wartosc (klucz jest "tlumaczony" na wartosc, dziala podobnie jak typowy slownik)
-    cipher_letter_value = list(range(100, 1000))     #lista liczb od 100 do 999 - wartosci liter
-    random.shuffle(cipher_letter_value)              #losowo zmien kolejnosc liczb
-    
+def GenerateKey():
+    # Generate the cipher key
+    alphabet = string.ascii_uppercase                       # Uppercase English letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    key = {}                                                # Dictionary to store letter-number mappings
+    cipher_letter_value = list(range(100, 1000))            # List of numbers from 100 to 999
+    random.shuffle(cipher_letter_value)                     # Shuffle the numbers randomly
 
-    #petla przechodzi przez wszystkie litery alfabetu 
-    #kazdej literze alfabetu sa przypiswyane po 3 losowe liczby np "A":[123, 456, 789].
-    #Jest tworzona nowa, zastepcza lista cipher_letter_value z liczbami ktore NIE zostaly uzyte do szyfrowania
-    for letter in alfabet:                             
+    # Assign each letter 3 unique random numbers
+    for letter in alphabet:
         key[letter] = random.sample(cipher_letter_value, 3)
-        cipher_letter_value = [num for num in cipher_letter_value if num not in key[letter]]      #list comprehension
-    
-    return key              #zwrocenie klucza
 
-def encrypt(message, key):      #funkcja szyfrujaca
+        # Remove used numbers from the list - avoid repetition. Eacch letter must have 3 unique numbers
+        cipher_letter_value = [num for num in cipher_letter_value if num not in key[letter]]
     
-    message = message.upper()           #wszystkie litery w jawnej wiadomosci uzytkownika sa zamieniane na wielkie
-    encrypted_message = []              #zaszyfrowana wiadomosc
+    return key
+
+def Encrypt(message, key):
+    # Convert message to uppercase
+    message = message.upper()
+    encrypted_message = []
     
-    #petla przechodzi przez wszystkie litery wiadomosci uzytkownika ktora ma byc zaszyfrowana
-    #jesli litera w wiadomosci jest w slowniku 'key', to do listy encrypted_message, ktora jest zaszyfrowana wiadomoscia
-    #dodawana jest losowo jedna z 3 liczb odpowiadajaca okreslonej literze. W przeciwnym wypadku znak ktorego nie ma 
-    # w alfabecie jest przepisywany bez zmian
-    for letter in message:          
+    # Replace each letter in the message with a randomly chosen corresponding number (1 of 3)
+    for letter in message:
         if letter in key:
             encrypted_message.append(str(random.choice(key[letter])))
         else:
-            continue
-            #encrypted_message.append(letter)
+            continue  # Ignore characters that are not in the alphabet
     
     return ' '.join(encrypted_message)
 
-
-    #funkcja deszyfrujaca 
-    #zmienna reverse_key jest typu slownik - tutaj odwraca mapowanie klucza szyfrujacego - klucz szyfrujacy mapuje litery na liczby, a klucz deszyfrujacy
-    #liczby na litery.
-    # 
-    # str(letter_value): letter - tworzenie pary klucz-wartosc (liczba-litera). liczba (klucz) jest zmieniana na stringa
-    #for letter, numbers in key.items() - zewnetrzna petla iterujaca po parach klucz-wartosc
-    #for letter_value in numbers - wewnetrzna petla iterujaca po liczbach przypadajaca na kazda litere
-def decrypt(ciphertext, key):
-    
-    reverse_key = {str(letter_value): letter for letter, numbers in key.items() for letter_value in numbers}      #dictionary comprehension
+def Decrypt(ciphertext, key):
+    # Reverse the key mapping: map numbers back to their corresponding letters
+    # Dictionary comprehension
+    # str(letter_value): letter - create a dictionary with number as key and letter as value
+    # for letter, numbers in key.items() - iterate over the key dictionary
+    # for letter_value in numbers - iterate over the list of numbers for each letter
+    reverse_key = {str(letter_value): letter for letter, numbers in key.items() for letter_value in numbers}
     decrypted_message = []
     
-    #np.
-    # '151' : 'A'
-    # '165' : 'A'
-    # '567' : 'A'
-    
-
-    #funkcja split() dzieli stringa 'ciphertext' (zaszyfrowana wiadomosc) na czesci
-    #petla iteruje po kazdej czesci (po kazdej liczbie z zakresu 100-999)
-    #Jesli jest w kluczu odszyfrowujacym, to tej liczbie przypisywana jest odpowiednia litera
-    # w przeciwnym wypadku przepisywany jest znak/liczba bez zmian
+    # Split the encrypted text into numbers and convert them back to letters
     for symbol in ciphertext.split():
         if symbol in reverse_key:
             decrypted_message.append(reverse_key[symbol])
         else:
-            decrypted_message.append(symbol)
+            decrypted_message.append(symbol)  # Keep any unrecognized symbols unchanged
     
     return ''.join(decrypted_message)
 
-
-def save_key(key, filename):                    #zapisanie klucza jako plik w folderze programu
-
+def SaveKey(key, filename):
+    # Save the cipher key as a JSON file
     with open(filename, 'w') as file:
         json.dump(key, file)
 
-def load_key(filename):
-                                                #wczytanie klucza
+def LoadKey(filename):
+    # Load the cipher key from a JSON file
     with open(filename, 'r') as file:
         return json.load(file)
 
 def main():
     while True:
         print("Homophonic Substitution Cipher with Key V1.0")
-        print("1. Wygeneruj nowy klucz")
-        print("2. Zaszyfruj wiadomosc")
-        print("3. Odszyfruj wiadomosc")
-        print("4. Wyjdz")
+        print("1. Generate a new key")
+        print("2. Encrypt a message")
+        print("3. Decrypt a message")
+        print("4. Exit")
         
-        choice = input("Wybierz opcje: ")
+        choice = input("Choose an option: ")
         
         if choice == '1':
-            key = generate_key()
-            filename = input("Podaj nazwe klucza, aby zapisac go jako plik: ")
+            key = GenerateKey()
+            filename = input("Enter a filename to save the key: ")
             try:
-                save_key(key, filename)
-                print(f"Klucz zapisany jako {filename}")
+                SaveKey(key, filename)
+                print(f"Key saved as {filename}")
             except:
-                print("Nie udalo sie zapisac klucza. Sprobuj ponownie!")
+                print("Failed to save the key. Please try again!")
                 
-        
         elif choice == '2':
-            filename = input("Podaj nazwe pliku (klucza): ")
+            filename = input("Enter the key filename: ")
             try:
-                key = load_key(filename)
-                message = input("Podaj wiadomosc do zaszyfrowania: ")
-                encrypted_message = encrypt(message, key)
-                print(f"Zaszyfrowana wiadomosc: {encrypted_message}")
+                key = LoadKey(filename)
+                message = input("Enter the message to Encrypt: ")
+                encrypted_message = Encrypt(message, key)
+                print(f"Encrypted message: {encrypted_message}")
             except:
-                print("Blad podczas wczytywania klucza. Upewnij sie ze zostal wygenerowany.")
+                print("Error loading the key. Make sure it has been generated.")
         
         elif choice == '3':
-            filename = input("Podaj nazwe pliku (klucza): ")
+            filename = input("Enter the key filename: ")
             try:
-                key = load_key(filename)
-                ciphertext = input("Podaj zaszyfrowany tekst: ")
-                decrypted_message = decrypt(ciphertext, key)
-                print(f"Odszyfrowana wiadomosc: {decrypted_message}")
+                key = LoadKey(filename)
+                ciphertext = input("Enter the encrypted text: ")
+                decrypted_message = Decrypt(ciphertext, key)
+                print(f"Decrypted message: {decrypted_message}")
             except:
-                print("Blad podczas wczytywania klucza. Upewnij sie ze zostal wygenerowany")                
+                print("Error loading the key. Make sure it has been generated.")
 
         elif choice == '4':
             break
         
         else:
-            print("Zly wybor.")
-
+            print("Invalid choice.")

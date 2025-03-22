@@ -400,5 +400,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 *.pyproj
-.pyproj
 *.sln
+.vs/
+_pycache_/
+env/
